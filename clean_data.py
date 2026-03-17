@@ -104,10 +104,12 @@ def parse_case_number_to_datetime(case_number):
 # print("Path to dataset files:", path)
 
 # dataset already downloaded so i saved the path to it in a file path.txt
+print("Loading kaggle shark attack dataset from: felipeesc/shark-attack-dataset...")
 with open("path.txt", "r") as f:
     path = f.read()
-
 attacks_df = pd.read_csv(path+'/attacks.csv', encoding_errors='ignore')
+
+print()
 print("Original data:")
 print(attacks_df.head())
 
@@ -130,12 +132,17 @@ print("Standardising data types...")
 # remove leading and trailing spaces
 attacks_df = attacks_df.map(lambda x: x.strip() if isinstance(x, str) else x)
 
+# convert age to number rather than string
+attacks_df['Age'] = pd.to_numeric(attacks_df['Age'], errors='coerce', downcast='integer')
+
 print("Missing values in 'Date' column:")
 print("Unknown days:", count_date_matching_pattern(attacks_df, missing_day_pattern)[0])
 print("Unknown months:", count_date_matching_pattern(attacks_df, missing_month_pattern)[0])
 print("Cleaning up missing date data...")
-attacks_df['Date (datetime)'] = attacks_df['Case Number'].apply(parse_case_number_to_datetime) # deals with unstandardised date data by creating standardised new Data (datetime) column
-print(len(attacks_df[attacks_df['Date (datetime)'].notna()]), "non-NaT dates of", len(attacks_df), "total")
+attacks_df.rename(columns={"Date":"Information on date of occurence"}, inplace=True)
+attacks_df['Date'] = attacks_df['Case Number'].apply(parse_case_number_to_datetime) # deals with unstandardised date data by creating standardised new Data (datetime) column
+attacks_df.drop(axis=1, labels=['Case Number'], inplace=True) # drop Case Number value since it is no longer useful
+print(len(attacks_df[attacks_df['Date'].notna()]), "non-NaT dates of", len(attacks_df), "total")
 
 # replacing non-standardised values with standardised ones
 print("Standardising data values...")
@@ -170,3 +177,6 @@ attacks_df.loc[(attacks_df[column] =='M'), column] = 'N'
 attacks_df.loc[(attacks_df[column] =='2017'), column] = np.NaN
 
 print("\n\n\nALL DONE!")
+print()
+print("Final dataset:")
+print(attacks_df.head())
