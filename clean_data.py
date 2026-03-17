@@ -98,75 +98,75 @@ def parse_case_number_to_datetime(case_number):
     # If no patterns match, return NaT
     return pd.NaT
 
-if __name__=="__main__":
-    # # download dataset from kaggle
-    # path = kagglehub.dataset_download("felipeesc/shark-attack-dataset")
-    # print("Path to dataset files:", path)
 
-    # dataset already downloaded so i saved the path to it in a file path.txt
-    with open("path.txt", "r") as f:
-        path = f.read()
+# # download dataset from kaggle
+# path = kagglehub.dataset_download("felipeesc/shark-attack-dataset")
+# print("Path to dataset files:", path)
 
-    attacks_df = pd.read_csv(path+'/attacks.csv', encoding_errors='ignore')
-    print("Original data:")
-    print(attacks_df.head())
-    
-    print()
-    print("Original number of columns before cleaning:", len(attacks_df))
+# dataset already downloaded so i saved the path to it in a file path.txt
+with open("path.txt", "r") as f:
+    path = f.read()
 
-    print("\n\n\nSTARTING CLEANING...\n\n\n")
+attacks_df = pd.read_csv(path+'/attacks.csv', encoding_errors='ignore')
+print("Original data:")
+print(attacks_df.head())
 
-    # drop duplicate or redundant columns. keep only one of the needed ones
-    print("Dropping redundant columns...")
-    attacks_df.drop(axis=1, labels=['Case Number.1','Case Number.2', 'Year'], inplace=True)
-    attacks_df.drop(axis=1, labels=['Unnamed: 22', 'Unnamed: 23'], inplace=True)
-    attacks_df.drop(axis=1, labels=['href', 'href formula'], inplace=True) # drop them, keep 'pdf'
+print()
+print("Original number of columns before cleaning:", len(attacks_df))
 
-    print("Dropping sparse rows(>70% null values)...")
-    attacks_df.dropna(axis=0,thresh=7, inplace=True) # drop values with at least threshold 7 i.e. less than 40% of fields are non-na values
-    
+print("\n\n\nSTARTING CLEANING...\n\n\n")
 
-    print("Standardising data types...")
-    # remove leading and trailing spaces
-    attacks_df = attacks_df.map(lambda x: x.strip() if isinstance(x, str) else x)
+# drop duplicate or redundant columns. keep only one of the needed ones
+print("Dropping redundant columns...")
+attacks_df.drop(axis=1, labels=['Case Number.1','Case Number.2', 'Year'], inplace=True)
+attacks_df.drop(axis=1, labels=['Unnamed: 22', 'Unnamed: 23'], inplace=True)
+attacks_df.drop(axis=1, labels=['href', 'href formula'], inplace=True) # drop them, keep 'pdf'
 
-    print("Missing values in 'Date' column:")
-    print("Unknown days:", count_date_matching_pattern(attacks_df, missing_day_pattern)[0])
-    print("Unknown months:", count_date_matching_pattern(attacks_df, missing_month_pattern)[0])
-    print("Cleaning up missing date data...")
-    attacks_df['Date (datetime)'] = attacks_df['Case Number'].apply(parse_case_number_to_datetime) # deals with unstandardised date data by creating standardised new Data (datetime) column
-    print(len(attacks_df[attacks_df['Date (datetime)'].notna()]), "non-NaT dates of", len(attacks_df), "total")
+print("Dropping sparse rows(>70% null values)...")
+attacks_df.dropna(axis=0,thresh=7, inplace=True) # drop values with at least threshold 7 i.e. less than 40% of fields are non-na values
 
-    # replacing non-standardised values with standardised ones
-    print("Standardising data values...")
 
-    column = 'Type'
-    # in 'Type' column, Boat, Boating and Boatomg are the same thing and should be treated as such. Invalid should be represented as NaN
-    attacks_df.loc[(attacks_df[column] =='Boat'), column] = 'Boating' 
-    attacks_df.loc[(attacks_df[column] =='Boatomg'), column] = 'Boating'
-    attacks_df.loc[(attacks_df[column] =='Invalid'), column] = np.NaN
+print("Standardising data types...")
+# remove leading and trailing spaces
+attacks_df = attacks_df.map(lambda x: x.strip() if isinstance(x, str) else x)
 
-    column = 'Country'
-    attacks_df.loc[(attacks_df[column] =='CEYLON'), column] = 'SRI LANKA'
-    attacks_df.loc[(attacks_df[column] =='CEYLON (SRI LANKA)'), column] = 'SRI LANKA'
-    attacks_df.loc[(attacks_df[column] =='Fiji'), column] = 'FIJI'
-    attacks_df.loc[(attacks_df[column] =='MALDIVE ISLANDS'), column] = 'MALDIVES'
-    attacks_df.loc[(attacks_df[column] =='ST. MAARTIN'), column] = 'ST. MARTIN'
-    attacks_df.loc[(attacks_df[column] =='Seychelles'), column] = 'SEYCHELLES'
-    attacks_df.loc[(attacks_df[column] =='Sierra Leone'), column] = "SIERRA LEONE"
-    attacks_df.loc[(attacks_df[column] =='UNITED ARAB EMIRATES (UAE)'), column] = 'UNITED ARAB EMIRATES'
-    attacks_df.loc[(attacks_df[column] =='REUNION'), column] = 'REUNION ISLAND'
-    attacks_df[column] = attacks_df[column].str.upper() # capitalise all countries
+print("Missing values in 'Date' column:")
+print("Unknown days:", count_date_matching_pattern(attacks_df, missing_day_pattern)[0])
+print("Unknown months:", count_date_matching_pattern(attacks_df, missing_month_pattern)[0])
+print("Cleaning up missing date data...")
+attacks_df['Date (datetime)'] = attacks_df['Case Number'].apply(parse_case_number_to_datetime) # deals with unstandardised date data by creating standardised new Data (datetime) column
+print(len(attacks_df[attacks_df['Date (datetime)'].notna()]), "non-NaT dates of", len(attacks_df), "total")
 
-    column = 'Sex '
-    attacks_df.loc[(attacks_df[column] =='lli'), column] = np.NaN
-    attacks_df.loc[(attacks_df[column] =='.'), column] = np.NaN
-    attacks_df.loc[(attacks_df[column] =='N'), column] = 'M'
+# replacing non-standardised values with standardised ones
+print("Standardising data values...")
 
-    column = 'Fatal (Y/N)'
-    attacks_df.loc[(attacks_df[column] =='y'), column] = "Y"
-    attacks_df.loc[(attacks_df[column] =='UNKNOWN'), column] = np.NaN
-    attacks_df.loc[(attacks_df[column] =='M'), column] = 'N'
-    attacks_df.loc[(attacks_df[column] =='2017'), column] = np.NaN
+column = 'Type'
+# in 'Type' column, Boat, Boating and Boatomg are the same thing and should be treated as such. Invalid should be represented as NaN
+attacks_df.loc[(attacks_df[column] =='Boat'), column] = 'Boating' 
+attacks_df.loc[(attacks_df[column] =='Boatomg'), column] = 'Boating'
+attacks_df.loc[(attacks_df[column] =='Invalid'), column] = np.NaN
 
-    print("\n\n\nALL DONE!")
+column = 'Country'
+attacks_df.loc[(attacks_df[column] =='CEYLON'), column] = 'SRI LANKA'
+attacks_df.loc[(attacks_df[column] =='CEYLON (SRI LANKA)'), column] = 'SRI LANKA'
+attacks_df.loc[(attacks_df[column] =='Fiji'), column] = 'FIJI'
+attacks_df.loc[(attacks_df[column] =='MALDIVE ISLANDS'), column] = 'MALDIVES'
+attacks_df.loc[(attacks_df[column] =='ST. MAARTIN'), column] = 'ST. MARTIN'
+attacks_df.loc[(attacks_df[column] =='Seychelles'), column] = 'SEYCHELLES'
+attacks_df.loc[(attacks_df[column] =='Sierra Leone'), column] = "SIERRA LEONE"
+attacks_df.loc[(attacks_df[column] =='UNITED ARAB EMIRATES (UAE)'), column] = 'UNITED ARAB EMIRATES'
+attacks_df.loc[(attacks_df[column] =='REUNION'), column] = 'REUNION ISLAND'
+attacks_df[column] = attacks_df[column].str.upper() # capitalise all countries
+
+column = 'Sex '
+attacks_df.loc[(attacks_df[column] =='lli'), column] = np.NaN
+attacks_df.loc[(attacks_df[column] =='.'), column] = np.NaN
+attacks_df.loc[(attacks_df[column] =='N'), column] = 'M'
+
+column = 'Fatal (Y/N)'
+attacks_df.loc[(attacks_df[column] =='y'), column] = "Y"
+attacks_df.loc[(attacks_df[column] =='UNKNOWN'), column] = np.NaN
+attacks_df.loc[(attacks_df[column] =='M'), column] = 'N'
+attacks_df.loc[(attacks_df[column] =='2017'), column] = np.NaN
+
+print("\n\n\nALL DONE!")
